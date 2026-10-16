@@ -426,6 +426,7 @@ img { max-width: 100%; display: block; }
 }
 .word-bank-item:hover { border-color: var(--primary); color: var(--primary); }
 .word-bank-item.used { opacity: 0.3; pointer-events: none; }
+.word-bank-item.used .rx-word { pointer-events: auto; }
 
 /* --- Answer Sheet --- */
 .answer-sheet {

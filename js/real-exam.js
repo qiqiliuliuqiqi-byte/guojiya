@@ -324,13 +324,13 @@ function rxWrapPhrase(raw) {
 // 仅当文本确实是英文句子时才挂句式与朗读按钮，避免中文正文出现无意义按钮
 function rxWrapSentencesEn(raw) {
   const s = String(raw ?? "");
-  if ((s.match(/[A-Za-z]/g) || []).length < 8) return esc(s);
+  if ((s.match(/[A-Za-z]/g) || []).length < 8) return rxWrapWords(s);
   return rxWrapSentences(s);
 }
 
 function rxWrapPhraseEn(raw) {
   const s = String(raw ?? "");
-  if ((s.match(/[A-Za-z]/g) || []).length < 2) return esc(s);
+  if ((s.match(/[A-Za-z]/g) || []).length < 2) return rxWrapWords(s);
   return rxWrapPhrase(s);
 }
 
@@ -365,6 +365,7 @@ function rxShowWordPopup(word, anchor, knownMeaning) {
   const pop = document.createElement("div");
   pop.className = "rx-popup";
   pop.id = "rxWordPopup";
+  pop.dataset.word = word;
   pop.innerHTML = `
     <div class="rx-popup-head">
       <strong>${esc(word)}</strong>
@@ -449,6 +450,8 @@ function rxLookupFallback(word) {
 }
 
 function rxRenderWordResult(word, meaning, phonetic) {
+  // 快速连续查词时，较早的查询结果不能覆盖当前单词。
+  if (RX.wordPopup?.dataset.word !== word) return;
   const body = document.getElementById("rxWordBody");
   if (!body) return;
   const safeWord = encodeURIComponent(word);
@@ -907,7 +910,7 @@ function rxSectionWriting(content, nav) {
     <div class="question-panel">
       <div class="q-direction">Part I &nbsp;Writing &nbsp;(30 minutes)</div>
       <div class="q-topic" style="line-height:2;">${rxWrapSentences(c.directions)}</div>
-      ${c.topic ? `<div style="margin:12px 0;padding:10px 14px;background:var(--accent-light,#eef6ff);border-radius:8px;font-size:14px;">💬 话题：<strong>${esc(c.topic)}</strong></div>` : ""}
+      ${c.topic ? `<div style="margin:12px 0;padding:10px 14px;background:var(--accent-light,#eef6ff);border-radius:8px;font-size:14px;">💬 话题：<strong>${rxWrapPhraseEn(c.topic)}</strong></div>` : ""}
       ${rxSectionTools(g)}
       <textarea class="answer-textarea" id="rxWriting" placeholder="在此输入你的作文..." oninput="rxUpdateWordCount()">${esc(saved)}</textarea>
       <div class="word-count" id="rxWordCount"></div>
@@ -941,7 +944,7 @@ function rxSectionListening(content, nav) {
       ${rxAudioPlayerHTML(g, gi)}
       ${g.questions.map(q => `
         <div class="choice-question">
-          ${q.passageTopic ? `<div class="rx-q-topic">📌 ${esc(q.passageTopic)}</div>` : ""}
+          ${q.passageTopic ? `<div class="rx-q-topic">📌 ${rxWrapPhraseEn(q.passageTopic)}</div>` : ""}
           <div class="q-text">${q.questionNumber}. ${rxWrapSentences(q.questionText)}</div>
           <div class="choice-options">
             ${(q.options || []).map(o => `
@@ -1167,7 +1170,7 @@ function rxClozeHTML(g) {
       ${bank.map(w => `
         <span class="word-bank-item rx-bankword ${Object.keys(RX.answers).some(k => k.startsWith("B") && RX.answers[k] === w.letter) ? "used" : ""}"
               id="rxBank${w.letter}" onclick="rxFillBlank('${w.letter}')">
-          <strong>${w.letter}</strong> ${esc(w.word)}${w.meaning ? `<em class="rx-bankcn">${esc(w.meaning)}</em>` : ""}
+          <strong>${w.letter}</strong> ${rxWrapPhrase(w.word)}${w.meaning ? `<em class="rx-bankcn">${esc(w.meaning)}</em>` : ""}
         </span>
       `).join("")}
     </div>
@@ -1188,7 +1191,7 @@ function rxAccentToolsHTML() {
 }
 
 function rxToolsHint() {
-  return "点单词看释义与发音 · 句尾 🔊 朗读整句 · 句式看结构";
+  return "正文、题干和选项均可点词查义 · 点选项字母作答 · 句尾 🔊 朗读 · 句式看结构";
 }
 
 // 常驻工具条：供雅思/四级等使用 app.js 渲染器的板块复用
@@ -1215,6 +1218,7 @@ function rxSelectBlank(num) {
 }
 
 function rxFillBlank(letter) {
+  if (Object.keys(RX.answers).some(k => k.startsWith("B") && RX.answers[k] === letter)) return;
   if (RX.blankSel == null) { showToast("请先点击文中的空格"); return; }
   const num = RX.blankSel;
   RX.answers["B" + num] = letter;
@@ -1244,7 +1248,7 @@ function rxMatchingHTML(g) {
   `).join("");
   const letters = (g.material?.paragraphs || []).map(p => p.id);
   return `
-    <h3 style="font-size:17px;margin:16px 0 12px;">${esc(g.title || "")}</h3>
+    <h3 style="font-size:17px;margin:16px 0 12px;">${rxWrapPhraseEn(g.title || "")}</h3>
     ${rxSectionTools(g)}
     <div>${paras}</div>
     <div style="margin-top:20px;border-top:1px solid var(--border,#e5e7eb);padding-top:16px;">
@@ -1274,7 +1278,7 @@ function rxPassageHTML(g) {
       <div class="rx-para-cn rx-cn-hidden">${esc(p.translation)}</div>` : ""}
     </div>`).join("");
   return `
-    <h3 style="font-size:17px;margin:16px 0 12px;">${esc(g.title || g.material?.title || "")}</h3>
+    <h3 style="font-size:17px;margin:16px 0 12px;">${rxWrapPhraseEn(g.title || g.material?.title || "")}</h3>
     ${rxSectionTools(g)}
     <div>${paras}</div>
     <div style="margin-top:8px;">
@@ -1483,8 +1487,8 @@ function rxAnswerItemHTML(it) {
     <div class="rx-wrong-item" data-status="${status}" data-part="${esc(it.part)}">
       <div class="rx-wrong-head">
         ${badge}<span class="rx-qno">${esc(it.part)} · 第 ${q.questionNumber} 题</span>
-        · 正确答案 <strong class="rx-correct">${esc(q.correctAnswer)}</strong>${correctWord && correctWord !== q.correctAnswer ? `（${esc(correctWord)}）` : ""}
-        ${it.a ? ` · 你的答案 <strong class="${status === "right" ? "rx-correct" : "rx-mine-wrong"}">${esc(it.a)}</strong>${chosenWord && chosenWord !== it.a ? `（${esc(chosenWord)}）` : ""}` : ""}
+        · 正确答案 <strong class="rx-correct">${esc(q.correctAnswer)}</strong>${correctWord && correctWord !== q.correctAnswer ? `（${rxWrapPhraseEn(correctWord)}）` : ""}
+        ${it.a ? ` · 你的答案 <strong class="${status === "right" ? "rx-correct" : "rx-mine-wrong"}">${esc(it.a)}</strong>${chosenWord && chosenWord !== it.a ? `（${rxWrapPhraseEn(chosenWord)}）` : ""}` : ""}
       </div>
       ${stem ? `<div class="rx-wrong-stem">${AnswerReview.textHTML(stem, it, q.translation || '')}</div>` : ""}
       ${opts}
@@ -1703,15 +1707,15 @@ function rxRenderCardPage(p, uid) {
       RX.quiz[uid] = { correct: [].concat(c.correct || []).map(String), ids: opts.map(o => String(o.id ?? "")) };
       return `<div class="rx-page quiz">
         ${c.title ? `<h4>${esc(c.title)}</h4>` : ""}
-        <div class="rx-quiz-stem">${esc(c.stem || "")}</div>
-        ${opts.map((o, i) => `<div class="rx-quiz-opt" onclick="rxQuizPick(this,'${uid}',${i})"><strong>${esc(o.id || String.fromCharCode(65 + i))}.</strong> ${esc(o.text)}</div>`).join("")}
+        <div class="rx-quiz-stem">${rxWrapPhraseEn(c.stem || "")}</div>
+        ${opts.map((o, i) => `<div class="rx-quiz-opt" onclick="rxQuizPick(this,'${uid}',${i})"><strong>${esc(o.id || String.fromCharCode(65 + i))}.</strong> ${rxWrapPhraseEn(o.text)}</div>`).join("")}
         ${c.explanation ? `<div class="rx-quiz-expl">💡 ${esc(c.explanation)}</div>` : ""}
       </div>`;
     }
     case "fillBlank": {
       RX.quiz = RX.quiz || {};
       RX.quiz["fb_" + uid] = (c.blanks || []).map(b => (typeof b === "string" ? b : (b.answer ?? ""))).join(" / ");
-      return `<div class="rx-page quiz"><div class="rx-quiz-stem">${esc(c.stem || "")}</div>
+      return `<div class="rx-page quiz"><div class="rx-quiz-stem">${rxWrapPhraseEn(c.stem || "")}</div>
         <div class="rx-fill-answer">答案：<span class="rx-fill-ans" onclick="this.textContent=RX.quiz['fb_${uid}']">点击查看</span></div>
         ${c.explanation ? `<div class="rx-quiz-expl">💡 ${esc(c.explanation)}</div>` : ""}</div>`;
     }

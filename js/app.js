@@ -917,7 +917,7 @@ function switchSection(section) {
             <div class="word-bank" id="wordBank_${si}">
               ${sec.wordBank.map((w, i) => `
                 <div class="word-bank-item ${isWordBankUsed(si, w) ? "used" : ""}" data-word="${w}" data-bank-idx="${i}" onclick="selectWordBank('${w}', ${si}, ${i}, this)">
-                  ${rxWrapPhraseEn(w)} (${String.fromCharCode(65 + i)})
+                  ${rxWrapPhraseEn(w)} <span class="option-letter">(${String.fromCharCode(65 + i)})</span>
                 </div>
               `).join("")}
             </div>
