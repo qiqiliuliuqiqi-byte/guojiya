@@ -1,0 +1,12 @@
+.env
+.env.*
+!.env.example
+config.env
+*.log
+.DS_Store
+.workbuddy/
+.ollama/
+node_modules/
+runtime/
+*.zip
+*.tar.gz

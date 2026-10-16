@@ -1,0 +1,40 @@
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    environment:
+      HOST: 0.0.0.0
+      PORT: 8888
+      PUBLIC_ORIGIN: https://${DOMAIN:?请在 .env 填写域名 DOMAIN}
+      ACCESS_USER: ${ACCESS_USER:-student}
+      ACCESS_PASSWORD: ${ACCESS_PASSWORD:?请在 .env 设置至少 12 位访问密码}
+      AI_BASE_URL: ${AI_BASE_URL:-http://ollama:11434}
+      AI_MODEL: ${AI_MODEL:-qwen3.5:9b-q4_K_M}
+      AI_TOKEN: ${AI_TOKEN:-}
+  web:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:?请在 .env 填写域名 DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+  ollama:
+    image: ollama/ollama:latest
+    profiles: [self-ai]
+    restart: unless-stopped
+    environment:
+      OLLAMA_NO_CLOUD: "1"
+      OLLAMA_NUM_PARALLEL: "1"
+    volumes:
+      - ollama_models:/root/.ollama
+volumes:
+  caddy_data:
+  caddy_config:
+  ollama_models:

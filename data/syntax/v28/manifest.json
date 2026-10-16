@@ -1,0 +1,25 @@
+{
+  "version": 28,
+  "model": {
+    "name": "en_core_web_trf",
+    "version": "3.8.0",
+    "spacy": "3.8.16",
+    "license": "MIT",
+    "source": "https://github.com/explosion/spacy-models/releases/tag/en_core_web_trf-3.8.0"
+  },
+  "corpusEntries": 29783,
+  "examFiles": 63,
+  "semanticCases": 70,
+  "examSemanticCases": 45,
+  "grammarFixtures": 25,
+  "semanticAssertions": 202,
+  "unavailable": 0,
+  "reviewCandidates": 2449,
+  "reviewFlags": {
+    "multiple_roots": 151,
+    "unresolved_dependency": 1130,
+    "nested_clauses": 1334,
+    "unresolved_blank": 0
+  },
+  "limits": "全量为自动解析及结构检查；70句为指定成分的语义回归，并非全题库逐句人工校订或准确率保证。测试句不写入题库。"
+}

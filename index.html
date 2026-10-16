@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <meta name="theme-color" content="#2563eb">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="过级鸭">
+  <title>英语四级真题_六级真题在线免费练习 - 过级鸭历年真题题库(CET4/CET6)</title>
+  <meta name="description" content="完整收录 2013-2025 年 CET4/CET6 真题，支持整套模考、AI 智能组卷与单题型专项突破。听力、阅读、写作、翻译全题型覆盖。">
+  <link rel="stylesheet" href="css/style.css?v=36">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦆</text></svg>">
+</head>
+<body>
+  <!-- Header -->
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="logo" onclick="route('/')">
+        <span class="logo-icon">🦆</span>
+        <span class="logo-text">过级鸭</span>
+      </div>
+      <nav class="nav-menu">
+        <span class="nav-item" data-route="/app" onclick="route('/app')">真题库</span>
+        <span class="nav-item" data-route="/app/course/CET6/exams" onclick="route('/app/course/CET6/exams')">六级真题</span>
+        <span class="nav-item" data-route="/app/course/CET4/exams" onclick="route('/app/course/CET4/exams')">四级真题</span>
+        <span class="nav-item" data-route="/app/course/CET6/course-list" onclick="route('/app/course/CET6/course-list')">备考课程</span>
+        <span class="nav-item" data-route="/app/course/CET6/question-types" onclick="route('/app/course/CET6/question-types')">题型练习</span>
+        <span class="nav-item" data-route="/app/course/CET6/vocabulary/book" onclick="route('/app/course/CET6/vocabulary/book')">词汇</span>
+      </nav>
+      <div class="header-actions">
+        <span class="btn-login" onclick="showToast('登录功能演示中')">登录</span>
+        <button class="btn-signup" onclick="showToast('注册功能演示中')">注册</button>
+      </div>
+      <span class="mobile-toggle" onclick="document.querySelector('.nav-menu').classList.toggle('open')">☰</span>
+    </div>
+  </header>
+
+  <!-- Main App -->
+  <main id="app"></main>
+
+  <!-- Feedback Button -->
+  <div class="feedback-btn" onclick="showToast('反馈功能演示中，感谢你的使用！')">💬</div>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <div class="logo">🦆 <span class="logo-text" style="-webkit-text-fill-color:#fff;">过级鸭</span></div>
+          <p>英语四六级智能备考助手，140+ 套历年真题在线模拟考试，AI 智能解析与评分，听力、阅读、写作、翻译全题型覆盖。</p>
+        </div>
+        <div class="footer-col">
+          <h4>真题库</h4>
+          <ul>
+            <li><a onclick="route('/app/course/CET4/exams')">CET-4 四级真题</a></li>
+            <li><a onclick="route('/app/course/CET6/exams')">CET-6 六级真题</a></li>
+            <li><a onclick="route('/app/course/CET4/mock-exam')">AI 模拟卷</a></li>
+            <li><a onclick="route('/app/course/CET4/question-types')">题型练习</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>备考课程</h4>
+          <ul>
+            <li><a onclick="route('/app/course/CET6/course-list')">全部课程</a></li>
+            <li><a onclick="route('/app/course/CET6/course-detail?id=cet6_listening')">听力专项</a></li>
+            <li><a onclick="route('/app/course/CET6/course-detail?id=cet6_reading')">阅读专项</a></li>
+            <li><a onclick="route('/app/course/CET6/course-detail?id=cet6_writing')">写作专项</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>词汇学习</h4>
+          <ul>
+            <li><a onclick="route('/app/course/CET6/vocabulary/book')">核心词书</a></li>
+            <li><a onclick="route('/app/course/CET6/vocabulary/typing')">打字训练</a></li>
+            <li><a onclick="route('/app/course/CET6/vocabulary/practice')">生词本</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>© 2025 过级鸭 · 英语四六级备考平台 · 本站为功能演示版本，仅供学习参考</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/syntax-sentences.js?v=36"></script>
+  <script src="js/data.js?v=36"></script>
+  <script src="js/app.js?v=36"></script>
+  <script src="js/answer-review.js?v=36"></script>
+  <script src="js/real-exam.js?v=36"></script>
+  <script src="js/syntax.js?v=36"></script>
+  <script src="js/syntax-view.js?v=36"></script>
+  <script src="js/sketch.js?v=36"></script>
+</body>
+</html>
