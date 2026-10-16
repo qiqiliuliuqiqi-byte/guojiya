@@ -1,0 +1,63 @@
+{
+  "checkedAt": "2026-10-16",
+  "scope": "63套本地六级的结构检查及已知异常联网交叉核对，并非逐题人工核对全部答案",
+  "fixes": [
+    {
+      "examId": "cet6_2019_12_2",
+      "fix": "移除无标准答案的重复听力占位组，保留原有完整25题",
+      "removedQuestions": 25
+    },
+    {
+      "examId": "cet6_2019_12_3",
+      "fix": "移除无标准答案的重复听力占位组，保留原有完整25题",
+      "removedQuestions": 25
+    },
+    {
+      "examId": "cet6_2018_12_1",
+      "fix": "按原录音和两处公开题解补回第22题，保留原选项和答案D",
+      "sources": [
+        "https://cet6.koolearn.com/20181220/825121_4.html",
+        "https://english-exam.lazynote.cn/cet6/sections/listening/2018-12-1/"
+      ]
+    },
+    {
+      "examId": "cet6_2018_12_3",
+      "fix": "按原录音和两处公开题解补回第22题，保留原选项和答案D",
+      "sources": [
+        "https://cet6.koolearn.com/20181220/825121_4.html",
+        "https://english-exam.lazynote.cn/cet6/sections/listening/2018-12-1/"
+      ]
+    },
+    {
+      "examId": "cet6_2016_12_2",
+      "fix": "删除误加在 progress 上的第35空；真正第35空对应 practice，答案由I改G",
+      "sources": [
+        "https://www.scribd.com/document/1077276495/2016%E5%B9%B412%E6%9C%88%E5%85%AD%E7%BA%A7%E7%9C%9F%E9%A2%98-%E7%AC%AC3%E5%A5%97",
+        "https://cet46.wendu.com/2017/0613/37048.shtml"
+      ]
+    }
+  ],
+  "cet4": {
+    "status": "本地没有对应真实试卷，原62套目录改为原站链接，不再复用演示题",
+    "source": "https://www.guojiya.cn/exam/cet4"
+  },
+  "ielts": {
+    "status": "原剑桥9–19各卷共用演示题，停止作为真实试卷开放",
+    "source": "https://www.cambridgeenglish.org/exams-and-tests/ielts/preparation/"
+  },
+  "duration": {
+    "cet6": 130,
+    "source": "https://cet.neea.edu.cn/html1/report/16123/201-1.htm"
+  },
+  "structuralResult": {
+    "papers": 63,
+    "objectiveQuestions": 3465,
+    "expectedPerPaper": 55,
+    "status": "通过题号、选项标签、选词填空空格和词库对应检查"
+  },
+  "remainingLimits": [
+    "未逐题人工审校3465题全部答案和解析语义。",
+    "套次沿用原站目录编号，部分机构对同考期试卷排序不同，尚未逐卷统一到其他出版社的套号。",
+    "四级与雅思未接入逐卷本地真实题库，不再提供公用样例作为历年真题。"
+  ]
+}

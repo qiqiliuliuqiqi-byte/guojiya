@@ -113,13 +113,13 @@ pageRenderers.home = (container) => {
       <div class="container">
         <div class="hero-inner">
           <h1>四级真题 · 六级真题 · 雅思剑桥真题<br><span class="highlight">免费在线练习</span></h1>
-          <p class="subtitle">英语四六级真题 + 剑桥雅思 9–19 真题，按你的节奏练<br>支持整套模考、AI 智能组卷、Band 评分估算与单题型专项突破。</p>
+          <p class="subtitle">六级本地真题练习 · 四级原题目录 · 雅思官方样题<br>点词查义、句式分析、AI 讲解与手写标注。</p>
           <div class="hero-cta">
             <button class="btn btn-primary btn-lg" onclick="route('/app')">进入真题库</button>
             <button class="btn btn-outline btn-lg" onclick="route('/app/course/CET6/exams')">CET6 真题列表</button>
           </div>
           <div class="hero-stats">
-            <div class="hero-stat"><div class="num">190+</div><div class="label">历年真题套卷</div></div>
+            <div class="hero-stat"><div class="num">63</div><div class="label">本地六级试卷</div></div>
             <div class="hero-stat"><div class="num">30+</div><div class="label">备考技巧课程</div></div>
             <div class="hero-stat"><div class="num">5000+</div><div class="label">核心词汇</div></div>
             <div class="hero-stat"><div class="num">729</div><div class="label">听力题组</div></div>
@@ -132,15 +132,15 @@ pageRenderers.home = (container) => {
       <div class="container">
         <div class="section-title">
           <span class="pill">PILLAR 01 · 真题</span>
-          <h2>190+ 套真题，<span class="highlight">按你的节奏练</span></h2>
-          <p class="desc">完整收录 2013–2025 年 CET4/CET6 真题 + 剑桥雅思 9–19 真题，支持整套模考、AI 智能组卷与单题型专项突破。</p>
+          <h2>核对原题，<span class="highlight">按你的节奏练</span></h2>
+          <p class="desc">六级已接入本地试卷；四级提供原站目录，雅思提供官方样题入口。未接入的内容不再以演示题代替。</p>
         </div>
         <div class="feature-cards">
           <div class="feature-card">
             <div class="icon">📝</div>
             <div class="tag">真题库</div>
             <h3>历年真题套卷</h3>
-            <p>2013–2025 年 CET4/CET6 完整套卷 + 剑桥雅思 9–19，听力、阅读、写作、翻译/口语全题型，无缺页无水印一键下载。</p>
+            <p>本地六级支持听力、阅读、写作和翻译练习；四级与雅思按入口说明查看真实来源。</p>
             <div style="display:flex;gap:8px;margin-bottom:16px;">
               <span class="link" onclick="route('/app/course/CET4/exams')">CET-4</span>
               <span style="color:var(--border);">|</span>
@@ -331,7 +331,7 @@ pageRenderers.courseCenter = (container) => {
             <div class="code">CET-4</div>
             <h2>大学英语四级</h2>
             <div class="subtitle">College English Test Band 4</div>
-            <p>2015–2025 完整真题 · 听力 / 阅读 / 写作 / 翻译四大题型一站练习</p>
+            <p>四级原题目录 · 按年份、月份与套数跳转原站核对</p>
             <div class="enter-btn">进入练习</div>
           </div>
           <div class="course-option" onclick="route('/app/course/CET6/exams')">
@@ -345,7 +345,7 @@ pageRenderers.courseCenter = (container) => {
             <div class="code">IELTS</div>
             <h2>雅思英语</h2>
             <div class="subtitle">International English Language Testing System</div>
-            <p>剑桥雅思 9–19 真题 · 听力 / 阅读 / 写作 / 口语四科专项 · Band 评分标准精讲</p>
+            <p>Cambridge English 官方备考与样题 · 本地逐卷题库待接入</p>
             <div class="enter-btn">进入练习</div>
           </div>
         </div>
@@ -361,6 +361,11 @@ pageRenderers.examList = (container) => {
     rxRenderExamList(container);
     return;
   }
+  rxRenderReferenceExamList(container, state.currentCourse);
+};
+
+// 原列表只用于回归旧渲染器；不能再把公用演示题列为历年真题。
+function renderSampleExamList(container) {
   const ds = getDatasets();
   const courseName = courseNames[state.currentCourse] || state.currentCourse;
   container.innerHTML = `
@@ -373,7 +378,7 @@ pageRenderers.examList = (container) => {
             ${ds.isIELTS ? "剑桥真题" : "历年真题"}
           </div>
           <h1>${courseName}${ds.isIELTS ? "剑桥真题" : "历年真题"}</h1>
-          ${ds.isIELTS ? '<p style="color:var(--text-light);font-size:15px;margin-top:8px;">完整收录剑桥雅思 9–19 学术类真题 + 机考模拟卷，听力 / 阅读 / 写作 / 口语全科在线练习</p>' : ""}
+          ${ds.isIELTS ? '<p style="color:var(--text-light);font-size:15px;margin-top:8px;">原演示目录不作为真实试卷开放。</p>' : ""}
         </div>
         ${ds.exams.map(period => `
           <div class="exam-period">
@@ -397,8 +402,18 @@ pageRenderers.examList = (container) => {
   `;
 };
 
-// Exam Practice
+// 每套试卷必须实际存在对应数据，不能按标题回退到一份公用样例。
 pageRenderers.practice = (container) => {
+  if (rxIsRealExam(state.currentExam)) {
+    state.currentCourse = "CET6";
+    rxRenderExam(container, state.currentExam);
+  } else {
+    rxRenderUnavailableExam(container, state.currentExam);
+  }
+};
+
+// 保留原样例渲染器供离线交互回归，正常路由不开放演示卷。
+function renderSamplePractice(container) {
   // CET6 真实真题：走真实考试模块
   if (rxIsRealExam(state.currentExam)) {
     state.currentCourse = "CET6";

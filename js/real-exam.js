@@ -51,6 +51,7 @@ rxLoadPronPrefs();
 
 const RX_DATA = "data/cet6-exams";
 const RX_COURSE_DATA = "data/cet6-courses";
+const RX_CET6_MINUTES = 130; // 教育部教育考试院公布的六级笔试时长
 
 function rxFetch(path) {
   return fetch(path).then(r => {
@@ -66,7 +67,10 @@ function rxLoadIndex() {
 
 function rxLoadExam(examId) {
   if (RX.exams[examId]) return Promise.resolve(RX.exams[examId]);
-  return rxFetch(RX_DATA + "/" + examId + ".json").then(d => (RX.exams[examId] = d));
+  return rxFetch(RX_DATA + "/" + examId + ".json").then(d => {
+    d.totalTime = RX_CET6_MINUTES; // 上游源文件误写为四级的 125 分钟
+    return (RX.exams[examId] = d);
+  });
 }
 
 function rxLoadCourses() {
@@ -128,7 +132,7 @@ function rxRenderExamList(container) {
           历年真题
         </div>
         <h1>大学英语六级历年真题</h1>
-        <p style="color:var(--text-light);font-size:15px;margin-top:8px;">完整收录 2016–2026 年 63 套六级真题，在线练习 · 智能评分 · 逐题解析 · 真题下载</p>
+        <p style="color:var(--text-light);font-size:15px;margin-top:8px;">本地已接入 2016–2026 年 ${index.length} 套六级试卷，套次沿用原站目录编号；与其他来源对照时请同时核对题目内容。</p>
       </div>
       ${periods.map(p => `
         <div class="exam-period">
@@ -154,6 +158,41 @@ function rxRenderExamList(container) {
   });
 }
 
+// 只有目录、没有逐卷题目的板块，展示可核对来源，不再加载公用演示题。
+function rxRenderReferenceExamList(container, course) {
+  if (course === "IELTS") {
+    container.innerHTML = `<div class="exam-page"><div class="container">
+      <div class="exam-header"><h1>雅思官方样题</h1><p style="color:var(--text-light);font-size:15px;margin-top:8px;">本地尚未接入剑桥雅思各套真实试卷。原目录共用演示题，已停止作为真题开放。</p></div>
+      <div class="exam-grid"><div class="exam-card"><div class="exam-title">Cambridge English · IELTS 官方备考与样题</div>
+      <div class="exam-actions"><a class="btn btn-primary btn-sm" href="https://www.cambridgeenglish.org/exams-and-tests/ielts/preparation/" target="_blank" rel="noopener noreferrer">查看官方样题</a></div></div></div>
+    </div></div>`;
+    return;
+  }
+  container.innerHTML = '<div class="exam-page"><div class="container" id="rxReferenceListWrap">正在加载四级原题目录…</div></div>';
+  rxFetch('data/cet4-exams/index.json').then(index => {
+    const wrap = document.getElementById('rxReferenceListWrap'); if (!wrap) return;
+    wrap.innerHTML = `<div class="exam-header"><div class="breadcrumb"><a onclick="route('/app')">首页</a> / 大学英语四级</div><h1>大学英语四级原题目录</h1>
+      <p style="color:var(--text-light);font-size:15px;margin-top:8px;">已核对 ${index.length} 套原站目录。本地尚无对应的逐卷真题数据，现跳转原站查看，不再复用六级标题和演示题。</p></div>
+      ${rxPeriods(index).map(p => `<div class="exam-period"><div class="exam-period-title">${esc(p.period)}</div><div class="exam-grid">
+        ${p.exams.map(e => `<div class="exam-card"><div class="exam-title">${esc(e.title)}</div><div class="exam-actions">
+          <a class="btn btn-primary btn-sm" href="https://www.guojiya.cn/exam/${encodeURIComponent(e.id)}" target="_blank" rel="noopener noreferrer">原站练习</a>
+          <span style="font-size:12px;color:var(--text-light);">本地题库待接入</span></div></div>`).join('')}
+      </div></div>`).join('')}`;
+  }).catch(() => {
+    const wrap = document.getElementById('rxReferenceListWrap');
+    if (wrap) wrap.innerHTML = '<p>原题目录加载失败，请刷新重试。本地未加载演示题。</p>';
+  });
+}
+
+function rxRenderUnavailableExam(container, id) {
+  const course = /^ielts/i.test(id || '') ? 'IELTS' : 'CET4';
+  state.examMode = false;
+  container.innerHTML = `<div class="practice-page"><div class="container"><div class="question-panel">
+    <h2>此链接尚无对应的真实试卷</h2><p style="margin:16px 0;line-height:1.8;">旧入口曾让不同套卷共用演示题，造成标题、题目和题号不一致。现已停止这种回退，请返回目录选择可核对的原题。</p>
+    <button class="btn btn-primary" onclick="route('/app/course/${course}/exams')">返回原题目录</button>
+  </div></div></div>`;
+}
+
 // ---------- 在线考试页 ----------
 function rxRenderExam(container, examId) {
   container.innerHTML = '<div class="practice-page"><div class="container"><p style="color:var(--text-light);padding:40px 0;text-align:center;">正在加载试卷内容…</p></div></div>';
@@ -168,7 +207,7 @@ function rxRenderExam(container, examId) {
     RX.sentences = {};
     RX.sentenceSeq = 0;
     rxBuildVocab(exam);
-    RX.timeRemaining = (exam.totalTime || 125) * 60;
+    RX.timeRemaining = RX_CET6_MINUTES * 60;
     state.examMode = true;
 
     // 听力组排序：section_a/b/c → passageIndex
@@ -197,7 +236,7 @@ function rxRenderExam(container, examId) {
               <button class="btn btn-outline btn-sm" onclick="if(confirm('确定要退出练习吗？已答内容将不会保存。')) { rxStopTTS(); route('/app/course/CET6/exams'); }">← 退出</button>
               <span class="exam-name">${exam.title}</span>
             </div>
-            <div class="timer" id="rxTimer">${exam.totalTime || 125}:00</div>
+            <div class="timer" id="rxTimer">${RX_CET6_MINUTES}:00</div>
           </div>
           <div class="practice-tabs" id="rxTabs">
             <div class="practice-tab active" data-section="writing" onclick="rxSwitch('writing')">✍️ 写作</div>
@@ -1354,16 +1393,16 @@ function rxSubmit(auto) {
   const wrongList = [];
   const allList = [];
 
-  // 听力：每题分值 = 248.5 / 总题数
+  // 六级：1–15 题各 7.1 分，16–25 题各 14.2 分，不可全部按同一权重。
+  let listenScore = 0;
   RX.groups.listening.forEach(g => g.questions.forEach(q => {
     listenTotal++;
     const a = RX.answers["L" + q.questionNumber];
     allList.push({ q, g, a, part: "听力", section: g.sectionName });
     if (!a) listenUnanswered++;
-    else if (a === q.correctAnswer) listenCorrect++;
+    else if (a === q.correctAnswer) { listenCorrect++; listenScore += q.questionNumber <= 15 ? 7.1 : 14.2; }
     else { listenWrong++; wrongList.push({ q, a, part: "听力", section: g.sectionName }); }
   }));
-  const listenScore = listenTotal ? (listenCorrect / listenTotal) * 248.5 : 0;
 
   // 阅读：按每题 score 字段
   RX.groups.reading.forEach(g => (g.questions || []).forEach(q => {
@@ -1397,7 +1436,7 @@ function rxSubmit(auto) {
           <div class="result-score">${Math.round(estimated)}</div>
           <div class="result-label">预估总分 / 710 分（客观题实测 + 主观题按正确率估算）</div>
           <div class="result-detail">
-            <div class="result-item"><div class="label">听力</div><div class="value">${Math.round(listenScore)}<span class="rx-sub">/248.5</span></div></div>
+            <div class="result-item"><div class="label">听力</div><div class="value">${listenScore.toFixed(1)}<span class="rx-sub">/248.5</span></div></div>
             <div class="result-item"><div class="label">阅读</div><div class="value">${readScore.toFixed(1)}<span class="rx-sub">/248.5</span></div></div>
             <div class="result-item"><div class="label">客观题得分</div><div class="value">${(objective).toFixed(1)}<span class="rx-sub">/497</span></div></div>
             <div class="result-item"><div class="label">答对 / 答错 / 未答</div><div class="value">${listenCorrect + readCorrect} / ${listenWrong + readWrong} / ${listenUnanswered + readUnanswered}</div></div>
