@@ -12,7 +12,6 @@ const state = {
   timer: null,
   timeRemaining: 0,
   examMode: false,
-  wordBankUsed: {},
   flashcardIndex: 0,
   typingIndex: 0,
   typingCorrect: 0,
@@ -419,6 +418,7 @@ pageRenderers.practice = (container) => {
   rxSeedVocab(ds.vocab);
 
   state.answers = {};
+  selectedBlank = null;
   state.currentSection = 0;
   state.timeRemaining = duration * 60;
   state.examMode = true;
@@ -916,7 +916,7 @@ function switchSection(section) {
             <div style="font-size:14px;font-weight:600;margin-bottom:12px;">Word Bank:</div>
             <div class="word-bank" id="wordBank_${si}">
               ${sec.wordBank.map((w, i) => `
-                <div class="word-bank-item ${state.wordBankUsed[si + "_" + i] ? "used" : ""}" data-word="${w}" data-bank-idx="${i}" onclick="selectWordBank('${w}', ${si}, ${i}, this)">
+                <div class="word-bank-item ${isWordBankUsed(si, w) ? "used" : ""}" data-word="${w}" data-bank-idx="${i}" onclick="selectWordBank('${w}', ${si}, ${i}, this)">
                   ${rxWrapPhraseEn(w)} (${String.fromCharCode(65 + i)})
                 </div>
               `).join("")}
@@ -1102,12 +1102,16 @@ function selectBlank(si, num) {
   showToast("请从下方 Word Bank 选择单词");
 }
 
+// 选项占用由当前答案推导，改选、重新渲染和新练习都不会残留旧占用。
+function isWordBankUsed(si, word) {
+  const prefix = si + "_blank_";
+  return Object.entries(state.answers).some(([key, value]) => key.startsWith(prefix) && value === word);
+}
+
 function selectWordBank(word, si, idx, el) {
-  if (el.classList.contains("used")) return;
-  if (selectedBlank) {
+  if (isWordBankUsed(si, word)) return;
+  if (selectedBlank && selectedBlank.si === si) {
     state.answers[selectedBlank.si + "_blank_" + selectedBlank.num] = word;
-    state.wordBankUsed[si + "_" + idx] = true;
-    el.classList.add("used");
     selectedBlank = null;
     switchSection("reading");
   } else {

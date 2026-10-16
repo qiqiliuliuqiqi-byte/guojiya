@@ -65,7 +65,7 @@ const server = http.createServer(async (req, res) => {
   try { urlPath = decodeURIComponent(req.url.split("?")[0]); } catch { res.writeHead(400); res.end(); return; }
   if (urlPath === '/api/portable/health') {
     res.writeHead(200, {'Content-Type':'application/json','Cache-Control':'no-store'});
-    res.end(JSON.stringify({app:'guojiya-portable',version:36})); return;
+    res.end(JSON.stringify({app:'guojiya-portable',version:37})); return;
   }
   if (await tutor.handle(req, res, urlPath)) return;
   if (urlPath === "/api/yd") {
@@ -123,4 +123,4 @@ server.on('error', error => {
   console.error(error.code === 'EADDRINUSE' ? `端口 ${PORT} 已被占用；请关闭原服务，或在 config.env 中修改 PORT。` : error.message);
   process.exitCode = 1;
 });
-server.listen(PORT, config.host, () => console.log(`过级鸭便携版 v36 已启动：http://127.0.0.1:${PORT}/?t=36\n关闭此终端将停止网站。`));
+server.listen(PORT, config.host, () => console.log(`过级鸭便携版 v37 已启动：http://127.0.0.1:${PORT}/?t=37\n关闭此终端将停止网站。`));

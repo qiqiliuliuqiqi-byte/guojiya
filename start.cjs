@@ -1,7 +1,7 @@
 // 脚本启动器：先加载配置，确认网站已就绪，再打开浏览器。
 const config = require('./portable-config');
 const {spawn} = require('node:child_process');
-const url = `http://127.0.0.1:${config.port}/?t=36`;
+const url = `http://127.0.0.1:${config.port}/?t=37`;
 const open = () => {
   if (process.env.GJY_NO_OPEN === '1') return;
   const child = process.platform === 'darwin' ? spawn('open',[url]) : process.platform === 'win32' ? spawn('rundll32.exe',['url.dll,FileProtocolHandler',url]) : spawn('xdg-open',[url]);

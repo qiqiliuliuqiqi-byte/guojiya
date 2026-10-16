@@ -4,7 +4,7 @@ CET6 / CET4 / 雅思练习程序。保留原有中文界面、现有题库、听
 
 ## 下载与安装
 
-从本仓库 **Releases** 下载 `GuoJiYa-Portable-v36.zip` 并完整解压。**Code → Download ZIP 是源码，不含 Node.js 运行环境。**
+从本仓库 **Releases** 下载 `GuoJiYa-Portable-v37.zip` 并完整解压。**Code → Download ZIP 是源码，不含 Node.js 运行环境。**
 
 1. 从 [Ollama 官网](https://ollama.com/download) 安装并打开 Ollama。
 2. 在 PowerShell 或终端执行：
