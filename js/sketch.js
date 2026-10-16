@@ -6,7 +6,7 @@
 
 const SK = {
   on: false,          // 涂鸦层是否开启
-  tool: "pen",        // pen | marker | eraser | text
+  tool: "pen",        // pen | marker | eraser | text | pan
   color: "#ef4444",
   width: 3,
   rough: true,        // 手绘感：随手涂鸦的笔触（速度变宽 + 微抖动），关掉则是平滑等宽
@@ -21,6 +21,9 @@ const SK = {
   frame: 0,
   dirty: true,
   pointerId: null,
+  pointerType: "",
+  touchSnapshot: null, // 双指手势取消第一指的临时笔画/擦除
+  pendingNote: null,   // 手指轻点松开后才创建便签，双指翻页不会弹出便签
   saveTimer: null,
   layer: null,
   notesBox: null,
@@ -167,7 +170,19 @@ function skRequestFrame() {
   });
 }
 
+function skLayerVisible() {
+  return SK.on || (!!(SK.strokes.length || SK.notes.length) && /^#\/practice\//.test(location.hash));
+}
+
+function skUpdateLayer() {
+  if (!SK.layer) return;
+  SK.layer.classList.toggle("active", skLayerVisible());
+  SK.layer.classList.toggle("drawing", SK.on);
+  SK.layer.classList.toggle("browsing", SK.on && SK.tool === "pan");
+}
+
 function skRedraw() {
+  skUpdateLayer();
   SK.dirty = true;
   skRequestFrame();
 }
@@ -194,6 +209,7 @@ function skPaint() {
   if (!ctx || !cv) return;
   const dpr = Number(cv.dataset.dpr) || 1;
   const x = window.scrollX, y = window.scrollY;
+  skUpdateLayer();
   const w = Number(cv.dataset.w), h = Number(cv.dataset.h);
   if (SK.viewX !== x || SK.viewY !== y) SK.dirty = true;
   SK.viewX = x; SK.viewY = y;
@@ -443,6 +459,10 @@ function skFinishStroke(e) {
   if (e && e.pointerId !== SK.pointerId) return;
   if (SK.pointerId === null) return;
   const id = SK.pointerId;
+  const note = e && e.type === "pointerup" ? SK.pendingNote : null;
+  SK.pendingNote = null;
+  SK.touchSnapshot = null;
+  SK.pointerType = "";
   if (SK.cur) {
     // 松笔也可能带有最后一段移动；cancel/lostcapture 的坐标不能当作笔迹。
     if (e && e.type === "pointerup") {
@@ -456,21 +476,43 @@ function skFinishStroke(e) {
   skRedraw();
   skSaveSoon();
   try { SK.canvas.releasePointerCapture(id); } catch (err) {}
+  if (note) skAddNote(note);
+}
+
+// 浏览器接管双指翻页/缩放前，恢复第一指按下前的笔迹，避免留下圆点或误擦。
+function skCancelTouch(e) {
+  if (!SK.touchSnapshot || (e && e.pointerId !== SK.pointerId)) return;
+  SK.strokes = SK.touchSnapshot.strokes;
+  SK.trash = SK.touchSnapshot.trash;
+  SK.pendingNote = null;
+  skFinishStroke();
+  skRedraw();
+  skSaveSoon();
 }
 
 function skBindCanvas(cv) {
   cv.addEventListener("pointerdown", (e) => {
-    if (!SK.on || SK.pointerId !== null || e.button !== 0 || e.isPrimary === false) return;
-    if (SK.tool === "text") {
+    if (!SK.on || SK.tool === "pan") return;
+    if (e.pointerType === "touch" && e.isPrimary === false) {
+      if (SK.pointerType === "touch") skCancelTouch();
+      return; // 交给浏览器原生双指翻页/缩放
+    }
+    if (SK.pointerId !== null || e.button !== 0 || e.isPrimary === false) return;
+    const touch = e.pointerType === "touch";
+    if (touch) SK.touchSnapshot = { strokes: SK.strokes.slice(), trash: SK.trash.slice() };
+    if (SK.tool === "text" && !touch) {
       const wasEditing = !!document.querySelector(".sk-note .sk-note-input");
       skFinishEditing();
       if (!wasEditing) skAddNote(skPos(e));
       return;
     }
     SK.pointerId = e.pointerId;
+    SK.pointerType = e.pointerType || "mouse";
     try { cv.setPointerCapture(e.pointerId); } catch (err) {}
     const [x, y] = skPos(e);
-    if (SK.tool === "eraser") {
+    if (SK.tool === "text") {
+      SK.pendingNote = [x, y];
+    } else if (SK.tool === "eraser") {
       SK.erasing = true;
       skEraseAt(x, y);
     } else {
@@ -486,9 +528,10 @@ function skBindCanvas(cv) {
   });
 
   cv.addEventListener("pointermove", (e) => {
-    if (!SK.on) return;
+    if (!SK.on || SK.tool === "pan") return;
     if (SK.pointerId !== null) {
       if (e.pointerId !== SK.pointerId) return;
+      if (SK.pendingNote && Math.hypot(...skPos(e).map((v, i) => v - SK.pendingNote[i])) > 8) SK.pendingNote = null;
       for (const sample of skSamples(e)) {
         if (SK.erasing) skEraseAt(...skPos(sample));
         else if (SK.cur) skSampleStroke(SK.cur, sample);
@@ -502,7 +545,10 @@ function skBindCanvas(cv) {
   });
 
   cv.addEventListener("pointerup", skFinishStroke);
-  cv.addEventListener("pointercancel", skFinishStroke);
+  cv.addEventListener("pointercancel", e => {
+    if (e.pointerType === "touch" && SK.touchSnapshot) skCancelTouch(e);
+    else skFinishStroke(e);
+  });
   cv.addEventListener("lostpointercapture", skFinishStroke);
   cv.addEventListener("pointerleave", (e) => {
     // 捕获成功后，离开边缘仍继续这一笔，不要提前截断曲线。
@@ -667,13 +713,15 @@ function skClear() {
 function skSetTool(t) {
   skFinishStroke();
   SK.tool = t;
+  skUpdateLayer();
   if (t !== "eraser") { SK.hover = -1; skRedraw(); }   // 换工具就把擦除预览收起来
   skSyncBar();
   if (typeof showToast === "function") {
     const name = { pen: "画笔", marker: "荧光笔", eraser: "橡皮擦", text: "文字标注" }[t] || t;
     const tip = {
-      pen: "已选画笔",
-      marker: "已选荧光笔",
+      pen: "已选画笔：单指写画，双指翻页",
+      marker: "已选荧光笔：单指标记，双指翻页",
+      pan: "已选滚动：可单指滑动页面，已有标注保留",
       eraser: "已选橡皮擦：点一下整条笔迹就消失，按住拖动能连擦，撤销可恢复",
       text: "已选文字标注：点击题目任意位置开始输入",
     }[t];
@@ -697,22 +745,24 @@ function skToggleRough() {
 /* ---------- 开关 ---------- */
 function skToggle(force) {
   skEnsure();
+  skFinishEditing();
   skFinishStroke();
   skSave();
   SK.on = (force === undefined) ? !SK.on : !!force;
-  SK.layer.classList.toggle("active", SK.on);
+  skUpdateLayer();
   document.body.classList.toggle("sk-on", SK.on);
   if (SK.on) {
     skLoad();
     skResize();
     skRedraw();
     skRenderNotes();
-    if (typeof showToast === "function") showToast("标注已开启：可直接在题目上写画");
+    if (typeof showToast === "function") showToast("标注已开启：单指写画、双指翻页；↕️ 可单指滚动");
   } else {
     SK.hover = -1;
     SK.erasing = false;
     skSave();
-    if (typeof showToast === "function") showToast("标注已关闭（已自动保存）");
+    skRedraw();
+    if (typeof showToast === "function") showToast("已退出画笔，可滑动页面（标注已保存）");
   }
   skSyncBar();
 }
@@ -731,6 +781,7 @@ function skBuildBar() {
         <button class="sk-tool" data-tool="marker" onclick="skSetTool('marker')" title="荧光笔">🖍️</button>
         <button class="sk-tool" data-tool="eraser" onclick="skSetTool('eraser')" title="橡皮擦：点一下整条笔迹即删除（按住拖动可连擦）">🧽</button>
         <button class="sk-tool" data-tool="text" onclick="skSetTool('text')" title="文字标注">🔤</button>
+        <button class="sk-tool" data-tool="pan" onclick="skSetTool('pan')" title="滚动：单指滑动页面，已有标注保留">↕️</button>
         <button class="sk-tool sk-tg" data-tg="rough" onclick="skToggleRough()" title="手绘笔触：开=随手涂鸦（轻重变化），关=平滑等宽">✋</button>
       </div>
       <div class="sk-row sk-colors">
@@ -745,7 +796,7 @@ function skBuildBar() {
         <button class="sk-act" onclick="skUndo()" title="撤销">↩️ 撤销</button>
         <button class="sk-act danger" onclick="skClear()" title="清除全部">🗑 清除</button>
       </div>
-      <div class="sk-hint">标注自动保存 · 切换板块各自独立</div>
+      <div class="sk-hint">单指写画 · 双指翻页<br>↕️ 单指滚动 · 自动保存</div>
     </div>`;
   document.body.appendChild(bar);
   document.getElementById("skFab").addEventListener("click", () => skToggle());
@@ -767,7 +818,7 @@ function skSyncBar() {
 /* ---------- 板块切换自动重载 ---------- */
 let skSyncTimer = null;
 function skSyncSection() {
-  if (!SK.on || !SK.key) return;
+  if (!SK.key) return;
   const k = skKey();
   if (k === SK.key) return;
   skFinishStroke();
@@ -789,8 +840,14 @@ function skInit() {
   skRenderNotes();
 
   // 滚动只申请下一帧，不读取 scrollHeight，不在事件处理里重排或重绘。
-  window.addEventListener("scroll", () => { if (SK.on) skRequestFrame(); }, { passive: true });
-  window.addEventListener("resize", () => { if (SK.on) skResize(); });
+  window.addEventListener("scroll", () => { if (skLayerVisible()) skRequestFrame(); }, { passive: true });
+  window.addEventListener("resize", () => { if (skLayerVisible()) skResize(); });
+  window.addEventListener("hashchange", () => { skSyncSection(); skUpdateLayer(); });
+  if (window.visualViewport) {
+    const viewportChanged = () => { if (skLayerVisible()) { skResize(); skRedraw(); } };
+    window.visualViewport.addEventListener("scroll", viewportChanged, { passive: true });
+    window.visualViewport.addEventListener("resize", viewportChanged, { passive: true });
+  }
   window.addEventListener("blur", () => skFinishStroke());
   window.addEventListener("pagehide", () => { skFinishStroke(); skSave(); });
   document.addEventListener("visibilitychange", () => {
@@ -801,7 +858,7 @@ function skInit() {
   if (typeof MutationObserver !== "undefined") {
     new MutationObserver(() => {
       clearTimeout(skSyncTimer);
-      skSyncTimer = setTimeout(() => { skSyncSection(); if (SK.on) skResize(); }, 400);
+      skSyncTimer = setTimeout(() => { skSyncSection(); skUpdateLayer(); if (skLayerVisible()) skResize(); }, 400);
     }).observe(document.getElementById("app") || document.body, { childList: true, subtree: true });
   }
 

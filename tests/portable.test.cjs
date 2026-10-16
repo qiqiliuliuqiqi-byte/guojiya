@@ -39,8 +39,8 @@ test('部署版：密码、静态白名单、音频 Range、同源 AI 和模型�
     assert.equal(aiRequest.model,'qwen3.5:9b-q4_K_M');assert.ok(aiRequest.format.properties.translations);assert.equal(aiRequest.think,false);
   } finally {child.kill();await new Promise(r=>child.once('exit',r));await close(ai);}
 });
-test('客户端不包含密钥、全部资源使用 v37、手机入口不替换原界面',()=>{
+test('客户端不包含密钥、全部资源使用 v38、手机入口不替换原界面',()=>{
   const html=fs.readFileSync(root+'/index.html','utf8');
-  assert.equal((html.match(/\?v=37/g)||[]).length,9);assert.match(html,/manifest.webmanifest/);
+  assert.equal((html.match(/\?v=38/g)||[]).length,9);assert.match(html,/manifest.webmanifest/);
   for(const file of fs.readdirSync(root+'/js')){const text=fs.readFileSync(root+'/js/'+file,'utf8');assert.ok(!text.includes('test-ai-token'));assert.ok(!text.includes('AI_TOKEN='));}
 });

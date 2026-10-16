@@ -990,19 +990,20 @@ img { max-width: 100%; display: block; }
 .sk-layer.active { display: block; }
 .sk-layer #skCanvas {
   position: absolute; top: 0; left: 0;
-  pointer-events: auto; touch-action: none;
+  pointer-events: none; touch-action: pinch-zoom;
   cursor: crosshair;
 }
-.sk-layer.active #skCanvas { cursor: crosshair; }
-body.sk-on #skCanvas { cursor: crosshair; }
+.sk-layer.drawing #skCanvas { pointer-events: auto; cursor: crosshair; }
+.sk-layer.browsing #skCanvas { touch-action: pan-x pan-y pinch-zoom; cursor: grab; }
 
 .sk-notes { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
 .sk-note {
   position: absolute; min-width: 110px; max-width: 320px;
   background: #fffbea; border: 2px solid var(--nc, #ef4444);
   border-radius: 8px; box-shadow: var(--shadow);
-  pointer-events: auto; font-size: 14px; line-height: 1.5;
+  pointer-events: none; font-size: 14px; line-height: 1.5;
 }
+.sk-layer.drawing .sk-note { pointer-events: auto; }
 .sk-note.dragging { box-shadow: var(--shadow-lg); transform: scale(1.03); }
 .sk-note-bar {
   display: flex; align-items: center; justify-content: space-between;
