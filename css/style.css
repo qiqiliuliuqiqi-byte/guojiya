@@ -428,6 +428,38 @@ img { max-width: 100%; display: block; }
 .word-bank-item.used { opacity: 0.3; pointer-events: none; }
 .word-bank-item.used .rx-word { pointer-events: auto; }
 
+/* 阅读悬浮框：不改变正文布局；移动后去掉所有底色，露出下层标注。 */
+.rf-panel { position: relative; }
+.rf-toolbar { position: absolute; top: -24px; right: 0; display: flex; gap: 5px; align-items: center; z-index: 81; }
+.rf-grip, .rf-home {
+  border: 1px solid #bfdbfe; border-radius: 6px; padding: 2px 7px; font: inherit;
+  font-size: 11px; line-height: 19px; color: #2563eb; background: transparent;
+}
+.rf-grip { cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; }
+.rf-grip:focus-visible, .rf-home:focus-visible { outline: 2px solid #2563eb; outline-offset: 2px; }
+.rf-grabbing { cursor: grabbing; }
+.rf-home { display: none; cursor: pointer; }
+.rf-question-group > .choice-question:nth-child(2):not(.rf-floating) > .rf-toolbar { left: 0; right: auto; }
+.rf-placeholder { pointer-events: none; }
+.rf-floating {
+  position: fixed !important; z-index: 91; box-sizing: border-box; margin: 0 !important;
+  padding: 8px !important; border: 1px dashed #93c5fd !important; border-radius: 8px;
+  max-height: min(65vh, calc(100dvh - 96px)); overflow: auto; overscroll-behavior: contain;
+  background: transparent !important; box-shadow: none !important; backdrop-filter: none !important;
+}
+.rf-floating > .rf-toolbar {
+  position: sticky; top: 0; left: auto; right: auto; width: 100%; justify-content: flex-end;
+  flex: 0 0 100%; margin-bottom: 6px;
+}
+.rf-floating > .rf-toolbar .rf-home { display: inline-block; }
+.rf-floating .rf-panel > .rf-toolbar { display: none; }
+.rf-floating .word-bank, .rf-floating .word-bank-item, .rf-floating .choice-option,
+.rf-floating .choice-option:hover, .rf-floating .choice-option.selected {
+  background: transparent !important; box-shadow: none !important;
+}
+.rf-floating .choice-option.selected { border-color: var(--primary); }
+.rf-floating .choice-question:last-child { margin-bottom: 0; }
+
 /* --- Answer Sheet --- */
 .answer-sheet {
   background: var(--bg-white); border-radius: var(--radius);
